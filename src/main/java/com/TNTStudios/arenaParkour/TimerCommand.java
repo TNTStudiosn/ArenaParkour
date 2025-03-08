@@ -124,7 +124,6 @@ public class TimerCommand implements CommandExecutor {
             player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_BASS, 1.0f, 1.0f);
 
             // Actualizamos best time con nombre si es menor, mostramos scoreboard y guardamos
-            plugin.getBestTimeManager().updateBestTimeWithName(playerUUID, player.getName(), totalTime);
             plugin.getBestTimeManager().showScoreboard(player);
             plugin.getBestTimeManager().saveBestTimes();
             plugin.getTablaCommand().actualizarTodasLasTablas();
