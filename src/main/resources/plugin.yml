@@ -4,3 +4,10 @@ main: com.TNTStudios.arenaParkour.ArenaParkour
 api-version: '1.18'
 authors: [ TNTStudios ]
 website: https://tntstudiosn.space/
+commands:
+  empezar:
+    description: Inicia el contador de tiempo.
+    permission: op
+  detener:
+    description: Detiene el contador de tiempo.
+    permission: op
