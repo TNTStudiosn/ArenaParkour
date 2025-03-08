@@ -1,13 +1,11 @@
 package com.TNTStudios.arenaParkour;
 
-import org.bukkit.Bukkit;
-import org.bukkit.Sound;
+import org.bukkit.*;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitRunnable;
-import org.bukkit.ChatColor;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -130,6 +128,11 @@ public class TimerCommand implements CommandExecutor {
             plugin.getBestTimeManager().showScoreboard(player);
             plugin.getBestTimeManager().saveBestTimes();
             plugin.getTablaCommand().actualizarTodasLasTablas();
+
+            // Teletransportar al jugador al spawn del lobby con rotación -90° (mirando a la izquierda)
+            World world = player.getWorld();
+            Location spawnLocation = new Location(world, -4.53, -38, 26.53, -90, 0);
+            player.teleport(spawnLocation);
         }
 
         return true;
