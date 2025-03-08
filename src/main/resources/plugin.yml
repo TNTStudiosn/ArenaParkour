@@ -4,6 +4,8 @@ main: com.TNTStudios.arenaParkour.ArenaParkour
 api-version: '1.18'
 authors: [ TNTStudios ]
 website: https://tntstudiosn.space/
+softdepend:
+  - DecentHolograms
 commands:
   empezar:
     description: Inicia el contador de tiempo.
@@ -21,3 +23,10 @@ commands:
     description: Regresa al último checkpoint guardado.
     permission: op
 
+  creartabla:
+    description: Crea un holograma con top 10.
+    permission: op
+
+  eliminartabla:
+    description: Elimina un holograma previamente creado.
+    permission: op

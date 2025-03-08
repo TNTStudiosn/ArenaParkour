@@ -132,4 +132,11 @@ public class BestTimeManager {
         int secs = seconds % 60;
         return String.format("%02dh:%02dm:%02ds", hours, minutes, secs);
     }
+
+    // En BestTimeManager.java
+    public Map<UUID, Integer> getAllTimes() {
+        // Retorna la copia o inmutable
+        return new HashMap<>(bestTimes);
+    }
+
 }
