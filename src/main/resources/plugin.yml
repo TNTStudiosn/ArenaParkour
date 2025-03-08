@@ -1,0 +1,6 @@
+name: ArenaParkour
+version: '1.0.0'
+main: com.TNTStudios.arenaParkour.ArenaParkour
+api-version: '1.18'
+authors: [ TNTStudios ]
+website: https://tntstudiosn.space/
