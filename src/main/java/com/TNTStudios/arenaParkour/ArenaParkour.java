@@ -6,16 +6,20 @@ public final class ArenaParkour extends JavaPlugin {
 
     @Override
     public void onEnable() {
-        // Registras tu listener
+        // Listener de bienvenida
         getServer().getPluginManager().registerEvents(new Welcome(this), this);
 
-        // Creas UNA SOLA instancia del TimerCommand
+        // TimerCommand
         TimerCommand timerCommand = new TimerCommand(this);
-
-        // Asignas la misma instancia a ambos comandos
         getCommand("empezar").setExecutor(timerCommand);
         getCommand("detener").setExecutor(timerCommand);
+
+        // CheckpointCommand
+        CheckpointCommand checkpointCommand = new CheckpointCommand(this);
+        getCommand("checkpoint").setExecutor(checkpointCommand);
+        getCommand("regresar").setExecutor(checkpointCommand);
     }
+
 
     @Override
     public void onDisable() {

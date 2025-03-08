@@ -32,7 +32,7 @@ public class Welcome implements Listener {
         player.addPotionEffect(new PotionEffect(PotionEffectType.NIGHT_VISION, Integer.MAX_VALUE, 0, false, false));
 
         // Enviar título y subtítulo de bienvenida
-        player.sendTitle("§6Arena", "§eThe place to play", 10, 70, 20);
+        player.sendTitle("§6Arena", "§eThe place to play", 20, 90, 20);
 
         // Reproducir sonido de bienvenida
         player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_PLING, 1.0f, 1.0f);

@@ -8,6 +8,16 @@ commands:
   empezar:
     description: Inicia el contador de tiempo.
     permission: op
+
   detener:
     description: Detiene el contador de tiempo.
     permission: op
+
+  checkpoint:
+    description: Guarda un checkpoint.
+    permission: op
+
+  regresar:
+    description: Regresa al último checkpoint guardado.
+    permission: op
+
