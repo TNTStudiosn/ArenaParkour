@@ -127,7 +127,7 @@ public class TimerCommand implements CommandExecutor {
             // Actualizamos best time si es menor y mostramos scoreboard
             plugin.getBestTimeManager().updateBestTime(playerUUID, totalTime);  // <-- Cambio
             plugin.getBestTimeManager().showScoreboard(player);
-
+            plugin.getBestTimeManager().saveBestTimes();
 
         }
 

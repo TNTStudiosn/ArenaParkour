@@ -112,7 +112,7 @@ public class BestTimeManager {
         if (best == -1) {
             line = ChatColor.YELLOW + "Aún no has hecho un intento";
         } else {
-            line = ChatColor.GREEN + "Mejor: " + formatTime(best);
+            line = ChatColor.GREEN + formatTime(best);
         }
 
         // Asignamos esa línea a un Score, para que aparezca en el scoreboard
