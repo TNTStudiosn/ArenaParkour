@@ -124,6 +124,11 @@ public class TimerCommand implements CommandExecutor {
                     ChatColor.YELLOW + "Tardaste " + finalTime + " en pasar el parkour", 10, 70, 20);
             player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_BASS, 1.0f, 1.0f);
 
+            // Actualizamos best time si es menor y mostramos scoreboard
+            plugin.getBestTimeManager().updateBestTime(playerUUID, totalTime);  // <-- Cambio
+            plugin.getBestTimeManager().showScoreboard(player);
+
+
         }
 
         return true;

@@ -36,5 +36,8 @@ public class Welcome implements Listener {
 
         // Reproducir sonido de bienvenida
         player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_PLING, 1.0f, 1.0f);
+
+        // Mostrar scoreboard con el mejor tiempo
+        plugin.getBestTimeManager().showScoreboard(player);
     }
 }
