@@ -4,6 +4,7 @@ import eu.decentsoftware.holograms.api.DHAPI;
 import eu.decentsoftware.holograms.api.holograms.Hologram;
 import eu.decentsoftware.holograms.api.holograms.HologramPage;
 import eu.decentsoftware.holograms.api.holograms.HologramLine;
+
 import org.bukkit.Location;
 import org.bukkit.Sound;
 import org.bukkit.command.Command;
@@ -84,7 +85,7 @@ public class TablaCommand implements CommandExecutor {
         // Guardar en config
         guardarTablaEnConfig(id, loc);
 
-        // Header
+        // Header animado (opcional)
         HologramPage page = holograma.getPage(0);
         String headerAnimated = ChatColor.GOLD + "<#ANIM:wave:&6,&e&l>TOP 10 PARKOUR</#ANIM>";
         HologramLine headerLine = new HologramLine(page, page.getNextLineLocation(), headerAnimated);
@@ -93,9 +94,7 @@ public class TablaCommand implements CommandExecutor {
         // Cargar top
         cargarTop10EnHolograma(holograma);
 
-        // Quitar/editar click action si no existe (solucionar error)
-        // player.sendMessage(...) o similar
-
+        // Feedback para el jugador
         player.playSound(loc, Sound.BLOCK_NOTE_BLOCK_PLING, 1f, 1f);
         player.sendMessage(ChatColor.GREEN + "¡Tabla " + id + " creada exitosamente!");
     }
@@ -128,7 +127,7 @@ public class TablaCommand implements CommandExecutor {
         if (holo == null) return;
 
         HologramPage page = holo.getPage(0);
-        // Borramos líneas, dejando la 0
+        // Borramos todas las líneas, dejando solo la primera (header)
         while (page.getLines().size() > 1) {
             page.removeLine(page.getLines().size() - 1);
         }
@@ -139,20 +138,25 @@ public class TablaCommand implements CommandExecutor {
         HologramPage page = holo.getPage(0);
         if (page == null) return;
 
+        // Obtenemos todos los tiempos (y nombres) del BestTimeManager
         Map<UUID, Integer> mapa = plugin.getBestTimeManager().getAllTimes();
         List<Map.Entry<UUID, Integer>> lista = new ArrayList<>(mapa.entrySet());
+        // Orden ascendente por tiempo
         lista.sort(Comparator.comparingInt(Map.Entry::getValue));
 
+        // Llenamos las 10 líneas
         for (int i = 0; i < 10; i++) {
             String linea;
             if (i < lista.size()) {
                 Map.Entry<UUID, Integer> e = lista.get(i);
-                String nombreJugador = obtenerNombreJugador(e.getKey());
+                // Usamos el método getLastKnownName(...) en lugar de getPlayer
+                String nombreJugador = plugin.getBestTimeManager().getLastKnownName(e.getKey());
                 String tiempoFormateado = formatearTiempo(e.getValue());
                 linea = ChatColor.WHITE + "" + (i + 1) + ".- "
                         + ChatColor.AQUA + nombreJugador + ChatColor.GRAY + ": "
                         + ChatColor.GREEN + tiempoFormateado;
             } else {
+                // Puesto sin ocupar
                 linea = ChatColor.DARK_GRAY + "" + (i + 1) + ".- Puesto aún no ocupado";
             }
             HologramLine newLine = new HologramLine(page, page.getNextLineLocation(), linea);
@@ -196,17 +200,13 @@ public class TablaCommand implements CommandExecutor {
                 plugin.getLogger().warning("Clave inválida en 'tablas': " + key);
             }
         }
+        // Tras crearlas, actualizamos su contenido
         actualizarTodasLasTablas();
     }
 
-    private String obtenerNombreJugador(UUID uuid) {
-        Player p = plugin.getServer().getPlayer(uuid);
-        if (p != null) {
-            return p.getName();
-        }
-        return "Desconocido";
-    }
-
+    // Eliminamos la vieja lógica de getPlayer(...) y devolvemos "Desconocido"
+    // para en su lugar usar getLastKnownName(...) de BestTimeManager en cargarTop10EnHolograma
+    // Queda solo este método para formatear tiempo:
     private String formatearTiempo(int seconds) {
         int hours = seconds / 3600;
         int minutes = (seconds % 3600) / 60;

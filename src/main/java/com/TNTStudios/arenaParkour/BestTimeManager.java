@@ -16,8 +16,12 @@ import java.util.UUID;
  */
 public class BestTimeManager {
     private final JavaPlugin plugin;
+
     // Almacena el mejor tiempo de cada jugador (en segundos).
     private final Map<UUID, Integer> bestTimes = new HashMap<>();
+
+    // Almacena el último nombre conocido de cada jugador.
+    private final Map<UUID, String> bestNames = new HashMap<>();
 
     public BestTimeManager(JavaPlugin plugin) {
         this.plugin = plugin;
@@ -27,10 +31,9 @@ public class BestTimeManager {
     //                          CARGAR / GUARDAR
     // ----------------------------------------------------------------------
     /**
-     * Carga los mejores tiempos desde el config.yml al iniciar el plugin.
+     * Carga los mejores tiempos (y nombres) desde el config.yml al iniciar el plugin.
      */
     public void loadBestTimes() {
-        // Asegurarnos de que el config esté cargado
         plugin.saveDefaultConfig();
         plugin.reloadConfig();
 
@@ -39,25 +42,39 @@ public class BestTimeManager {
             for (String uuidString : section.getKeys(false)) {
                 try {
                     UUID uuid = UUID.fromString(uuidString);
-                    int time = section.getInt(uuidString);
-                    bestTimes.put(uuid, time);
+                    // En config, cada jugador tendrá:
+                    // bestTimes:
+                    //   <uuid>:
+                    //     time: 123
+                    //     name: "Ejemplo"
+
+                    ConfigurationSection playerSec = section.getConfigurationSection(uuidString);
+                    if (playerSec != null) {
+                        int time = playerSec.getInt("time", -1);
+                        String name = playerSec.getString("name", "Desconocido");
+
+                        bestTimes.put(uuid, time);
+                        bestNames.put(uuid, name);
+                    }
                 } catch (IllegalArgumentException e) {
-                    // Si el UUID es inválido en el config, lo ignoramos
                     plugin.getLogger().warning("UUID inválido en config: " + uuidString);
                 }
             }
         }
-        plugin.getLogger().info("[ArenaParkour] ¡Mejores tiempos cargados!");
+        plugin.getLogger().info("[ArenaParkour] ¡Mejores tiempos (y nombres) cargados!");
     }
 
     /**
-     * Guarda los mejores tiempos en el config.yml al deshabilitar el plugin.
+     * Guarda los mejores tiempos (y nombres) en el config.yml al deshabilitar el plugin.
      */
     public void saveBestTimes() {
-        for (Map.Entry<UUID, Integer> entry : bestTimes.entrySet()) {
-            UUID uuid = entry.getKey();
-            int time = entry.getValue();
-            plugin.getConfig().set("bestTimes." + uuid.toString(), time);
+        for (UUID uuid : bestTimes.keySet()) {
+            int time = bestTimes.get(uuid);
+            String name = bestNames.getOrDefault(uuid, "Desconocido");
+
+            String path = "bestTimes." + uuid.toString();
+            plugin.getConfig().set(path + ".time", time);
+            plugin.getConfig().set(path + ".name", name);
         }
         plugin.saveConfig();
         plugin.getLogger().info("[ArenaParkour] ¡Mejores tiempos guardados!");
@@ -67,47 +84,51 @@ public class BestTimeManager {
     //                           MÉTODOS PRINCIPALES
     // ----------------------------------------------------------------------
     /**
-     * Devuelve el mejor tiempo en segundos de un jugador, o -1 si no tiene.
+     * Devuelve el mejor tiempo (en segundos) de un jugador, o -1 si no tiene.
      */
     public int getBestTime(UUID playerUUID) {
         return bestTimes.getOrDefault(playerUUID, -1);
     }
 
     /**
-     * Actualiza el mejor tiempo de un jugador si el nuevo es menor.
-     * @param playerUUID El UUID del jugador.
-     * @param newTime El tiempo recién obtenido (en segundos).
-     * @return true si se actualizó (nuevo récord), false si no.
+     * Actualiza el mejor tiempo de un jugador si el nuevo es menor (no cambia si es peor).
      */
-    public boolean updateBestTime(UUID playerUUID, int newTime) {
+    public void updateBestTimeWithName(UUID playerUUID, String playerName, int newTime) {
         int currentBest = getBestTime(playerUUID);
-        // Si no tenía registro o el nuevo tiempo es menor, actualizamos
+
+        // Si no tenía registro o el nuevo tiempo es menor, lo reemplazamos.
         if (currentBest == -1 || newTime < currentBest) {
             bestTimes.put(playerUUID, newTime);
-            return true; // Nuevo récord
         }
-        return false; // No cambió
+        // Guardamos/actualizamos también el nombre (en caso de que haya cambiado).
+        bestNames.put(playerUUID, playerName);
     }
 
     /**
-     * Muestra un scoreboard al jugador con su mejor tiempo,
-     * o indica que aún no ha completado el parkour.
+     * Devuelve el último nombre conocido de un jugador.
+     * Si no existe, retorna "Desconocido".
+     */
+    public String getLastKnownName(UUID playerUUID) {
+        return bestNames.getOrDefault(playerUUID, "Desconocido");
+    }
+
+    /**
+     * Muestra un scoreboard al jugador con su mejor tiempo o "Aún no has hecho un intento".
      */
     public void showScoreboard(Player player) {
-        // Creamos un scoreboard nuevo
         ScoreboardManager manager = Bukkit.getScoreboardManager();
         Scoreboard board = manager.getNewScoreboard();
 
-        // Creamos un objetivo tipo 'dummy' para el sidebar
-        Objective objective = board.registerNewObjective("ParkourBest", "dummy",
-                ChatColor.DARK_AQUA + "Tu Mejor Tiempo");
+        Objective objective = board.registerNewObjective(
+                "ParkourBest",
+                "dummy",
+                ChatColor.DARK_AQUA + "Tu Mejor Tiempo"
+        );
         objective.setDisplaySlot(DisplaySlot.SIDEBAR);
 
-        // Obtenemos el mejor tiempo
         UUID uuid = player.getUniqueId();
         int best = getBestTime(uuid);
 
-        // Creamos la línea que muestra el tiempo
         String line;
         if (best == -1) {
             line = ChatColor.YELLOW + "Aún no has hecho un intento";
@@ -115,11 +136,9 @@ public class BestTimeManager {
             line = ChatColor.GREEN + formatTime(best);
         }
 
-        // Asignamos esa línea a un Score, para que aparezca en el scoreboard
         Score scoreLine = objective.getScore(line);
-        scoreLine.setScore(1); // Valor arbitrario para que se muestre
+        scoreLine.setScore(1);
 
-        // Aplicamos el scoreboard al jugador
         player.setScoreboard(board);
     }
 
@@ -133,10 +152,10 @@ public class BestTimeManager {
         return String.format("%02dh:%02dm:%02ds", hours, minutes, secs);
     }
 
-    // En BestTimeManager.java
+    /**
+     * Retorna una copia de todos los tiempos, para usarlos en la tabla.
+     */
     public Map<UUID, Integer> getAllTimes() {
-        // Retorna la copia o inmutable
         return new HashMap<>(bestTimes);
     }
-
 }

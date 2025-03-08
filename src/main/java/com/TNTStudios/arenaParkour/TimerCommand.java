@@ -116,6 +116,7 @@ public class TimerCommand implements CommandExecutor {
 
             // Obtenemos y removemos el tiempo
             int totalTime = playerTimers.get(playerUUID);
+            plugin.getBestTimeManager().updateBestTimeWithName(playerUUID, player.getName(), totalTime);
             String finalTime = formatTime(totalTime);
             playerTimers.remove(playerUUID);
 
@@ -124,12 +125,11 @@ public class TimerCommand implements CommandExecutor {
                     ChatColor.YELLOW + "Tardaste " + finalTime + " en pasar el parkour", 10, 70, 20);
             player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_BASS, 1.0f, 1.0f);
 
-            // Actualizamos best time si es menor y mostramos scoreboard
-            plugin.getBestTimeManager().updateBestTime(playerUUID, totalTime);  // <-- Cambio
+            // Actualizamos best time con nombre si es menor, mostramos scoreboard y guardamos
+            plugin.getBestTimeManager().updateBestTimeWithName(playerUUID, player.getName(), totalTime);
             plugin.getBestTimeManager().showScoreboard(player);
             plugin.getBestTimeManager().saveBestTimes();
             plugin.getTablaCommand().actualizarTodasLasTablas();
-
         }
 
         return true;
