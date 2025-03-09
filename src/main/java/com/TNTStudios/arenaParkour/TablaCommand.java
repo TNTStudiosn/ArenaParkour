@@ -138,9 +138,9 @@ public class TablaCommand implements CommandExecutor {
         HologramPage page = holo.getPage(0);
         if (page == null) return;
 
-        // Obtenemos todos los tiempos (y nombres) del BestTimeManager
-        Map<UUID, Integer> mapa = plugin.getBestTimeManager().getAllTimes();
-        List<Map.Entry<UUID, Integer>> lista = new ArrayList<>(mapa.entrySet());
+        // Obtenemos todos los tiempos (por nombre) del BestTimeManager
+        Map<String, Integer> mapa = plugin.getBestTimeManager().getAllTimesByName();
+        List<Map.Entry<String, Integer>> lista = new ArrayList<>(mapa.entrySet());
         // Orden ascendente por tiempo
         lista.sort(Comparator.comparingInt(Map.Entry::getValue));
 
@@ -148,9 +148,8 @@ public class TablaCommand implements CommandExecutor {
         for (int i = 0; i < 10; i++) {
             String linea;
             if (i < lista.size()) {
-                Map.Entry<UUID, Integer> e = lista.get(i);
-                // Usamos el método getLastKnownName(...) en lugar de getPlayer
-                String nombreJugador = plugin.getBestTimeManager().getLastKnownName(e.getKey());
+                Map.Entry<String, Integer> e = lista.get(i);
+                String nombreJugador = e.getKey(); // Ahora usamos directamente el nombre del jugador
                 String tiempoFormateado = formatearTiempo(e.getValue());
                 linea = ChatColor.WHITE + "" + (i + 1) + ".- "
                         + ChatColor.AQUA + nombreJugador + ChatColor.GRAY + ": "
@@ -162,6 +161,7 @@ public class TablaCommand implements CommandExecutor {
             HologramLine newLine = new HologramLine(page, page.getNextLineLocation(), linea);
             page.addLine(newLine);
         }
+
     }
 
     private void guardarTablaEnConfig(int id, Location loc) {
@@ -193,16 +193,25 @@ public class TablaCommand implements CommandExecutor {
                 Location loc = new Location(plugin.getServer().getWorld(worldName), x, y, z, yaw, pitch);
 
                 String holoName = "tabla_" + id;
+                // Recreamos holograma
                 Hologram holo = DHAPI.createHologram(holoName, loc, false);
                 hologramasActivos.put(id, holo);
+
+                // === RE-INSERTAMOS EL HEADER ANTES DE ACTUALIZAR ===
+                HologramPage page = holo.getPage(0);
+                String headerAnimated = ChatColor.GOLD + "<#ANIM:wave:&6,&e&l>TOP 10 PARKOUR</#ANIM>";
+                HologramLine headerLine = new HologramLine(page, page.getNextLineLocation(), headerAnimated);
+                page.addLine(headerLine);
 
             } catch (NumberFormatException e) {
                 plugin.getLogger().warning("Clave inválida en 'tablas': " + key);
             }
         }
-        // Tras crearlas, actualizamos su contenido
+
+        // Ahora que cada holograma tiene su header, actualizamos
         actualizarTodasLasTablas();
     }
+
 
     // Eliminamos la vieja lógica de getPlayer(...) y devolvemos "Desconocido"
     // para en su lugar usar getLastKnownName(...) de BestTimeManager en cargarTop10EnHolograma

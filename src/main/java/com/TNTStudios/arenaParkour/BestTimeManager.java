@@ -17,11 +17,8 @@ import java.util.UUID;
 public class BestTimeManager {
     private final JavaPlugin plugin;
 
-    // Almacena el mejor tiempo de cada jugador (en segundos).
-    private final Map<UUID, Integer> bestTimes = new HashMap<>();
-
-    // Almacena el último nombre conocido de cada jugador.
-    private final Map<UUID, String> bestNames = new HashMap<>();
+    // Ahora usamos nombres en lugar de UUIDs
+    private final Map<String, Integer> bestTimesByName = new HashMap<>();
 
     public BestTimeManager(JavaPlugin plugin) {
         this.plugin = plugin;
@@ -37,48 +34,29 @@ public class BestTimeManager {
         plugin.saveDefaultConfig();
         plugin.reloadConfig();
 
-        ConfigurationSection section = plugin.getConfig().getConfigurationSection("bestTimes");
+        ConfigurationSection section = plugin.getConfig().getConfigurationSection("bestTimesByName");
         if (section != null) {
-            for (String uuidString : section.getKeys(false)) {
-                try {
-                    UUID uuid = UUID.fromString(uuidString);
-                    // En config, cada jugador tendrá:
-                    // bestTimes:
-                    //   <uuid>:
-                    //     time: 123
-                    //     name: "Ejemplo"
-
-                    ConfigurationSection playerSec = section.getConfigurationSection(uuidString);
-                    if (playerSec != null) {
-                        int time = playerSec.getInt("time", -1);
-                        String name = playerSec.getString("name", "Desconocido");
-
-                        bestTimes.put(uuid, time);
-                        bestNames.put(uuid, name);
-                    }
-                } catch (IllegalArgumentException e) {
-                    plugin.getLogger().warning("UUID inválido en config: " + uuidString);
-                }
+            for (String playerName : section.getKeys(false)) {
+                int time = section.getInt(playerName, -1);
+                bestTimesByName.put(playerName, time);
             }
         }
-        plugin.getLogger().info("[ArenaParkour] ¡Mejores tiempos (y nombres) cargados!");
+        plugin.getLogger().info("[ArenaParkour] ¡Mejores tiempos cargados usando nombres!");
     }
+
 
     /**
      * Guarda los mejores tiempos (y nombres) en el config.yml al deshabilitar el plugin.
      */
     public void saveBestTimes() {
-        for (UUID uuid : bestTimes.keySet()) {
-            int time = bestTimes.get(uuid);
-            String name = bestNames.getOrDefault(uuid, "Desconocido");
-
-            String path = "bestTimes." + uuid.toString();
-            plugin.getConfig().set(path + ".time", time);
-            plugin.getConfig().set(path + ".name", name);
+        for (String playerName : bestTimesByName.keySet()) {
+            int time = bestTimesByName.get(playerName);
+            plugin.getConfig().set("bestTimesByName." + playerName, time);
         }
         plugin.saveConfig();
-        plugin.getLogger().info("[ArenaParkour] ¡Mejores tiempos guardados!");
+        plugin.getLogger().info("[ArenaParkour] ¡Mejores tiempos guardados con nombres!");
     }
+
 
     // ----------------------------------------------------------------------
     //                           MÉTODOS PRINCIPALES
@@ -86,30 +64,19 @@ public class BestTimeManager {
     /**
      * Devuelve el mejor tiempo (en segundos) de un jugador, o -1 si no tiene.
      */
-    public int getBestTime(UUID playerUUID) {
-        return bestTimes.getOrDefault(playerUUID, -1);
+    public int getBestTimeByName(String playerName) {
+        return bestTimesByName.getOrDefault(playerName, -1);
     }
+
 
     /**
      * Actualiza el mejor tiempo de un jugador si el nuevo es menor (no cambia si es peor).
      */
-    public void updateBestTimeWithName(UUID playerUUID, String playerName, int newTime) {
-        int currentBest = getBestTime(playerUUID);
-
-        // Si no tenía registro o el nuevo tiempo es menor, lo reemplazamos.
+    public void updateBestTimeByName(String playerName, int newTime) {
+        int currentBest = getBestTimeByName(playerName);
         if (currentBest == -1 || newTime < currentBest) {
-            bestTimes.put(playerUUID, newTime);
+            bestTimesByName.put(playerName, newTime);
         }
-        // Guardamos/actualizamos también el nombre (en caso de que haya cambiado).
-        bestNames.put(playerUUID, playerName);
-    }
-
-    /**
-     * Devuelve el último nombre conocido de un jugador.
-     * Si no existe, retorna "Desconocido".
-     */
-    public String getLastKnownName(UUID playerUUID) {
-        return bestNames.getOrDefault(playerUUID, "Desconocido");
     }
 
     /**
@@ -126,8 +93,9 @@ public class BestTimeManager {
         );
         objective.setDisplaySlot(DisplaySlot.SIDEBAR);
 
-        UUID uuid = player.getUniqueId();
-        int best = getBestTime(uuid);
+        String playerName = player.getName();
+        int best = getBestTimeByName(playerName);
+
 
         String line;
         if (best == -1) {
@@ -155,7 +123,7 @@ public class BestTimeManager {
     /**
      * Retorna una copia de todos los tiempos, para usarlos en la tabla.
      */
-    public Map<UUID, Integer> getAllTimes() {
-        return new HashMap<>(bestTimes);
+    public Map<String, Integer> getAllTimesByName() {
+        return new HashMap<>(bestTimesByName);
     }
 }

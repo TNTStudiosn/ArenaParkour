@@ -18,8 +18,8 @@ public class TimerCommand implements CommandExecutor {
 
     private final ArenaParkour plugin;
     // Usamos UUID como llave para evitar problemas con referencias a Player.
-    private final Map<UUID, Integer> playerTimers = new HashMap<>();
-    private final Map<UUID, BukkitRunnable> timerTasks = new HashMap<>();
+    private final Map<String, Integer> playerTimers = new HashMap<>();
+    private final Map<String, BukkitRunnable> timerTasks = new HashMap<>();
 
     public TimerCommand(ArenaParkour plugin) {
         this.plugin = plugin;
@@ -34,7 +34,6 @@ public class TimerCommand implements CommandExecutor {
         }
 
         Player player = (Player) sender;
-        UUID playerUUID = player.getUniqueId();
         String playerName = player.getName();
 
         // Verificamos permisos
@@ -52,13 +51,13 @@ public class TimerCommand implements CommandExecutor {
 
 
             // Si ya existe una tarea para este jugador, significa que ya ha iniciado
-            if (timerTasks.containsKey(playerUUID)) {
-                player.sendMessage(ChatColor.RED + "El contador ya está en marcha.");
+            if (timerTasks.containsKey(playerName)) {
+                player.sendMessage(ChatColor.RED + "¡Tu Puedes!");
                 return true;
             }
 
-            // Iniciamos el tiempo en 0
-            playerTimers.put(playerUUID, 0);
+            playerTimers.put(playerName, 0);
+
 
             // Mensaje y sonido de inicio
             player.sendTitle(ChatColor.GOLD + "Contador iniciado", "", 10, 70, 20);
@@ -69,15 +68,15 @@ public class TimerCommand implements CommandExecutor {
                 @Override
                 public void run() {
                     // Verificamos que el jugador aún tenga un tiempo registrado
-                    if (!playerTimers.containsKey(playerUUID)) {
+                    if (!playerTimers.containsKey(playerName)) {
                         this.cancel();
-                        timerTasks.remove(playerUUID);
+                        timerTasks.remove(playerName);
                         return;
                     }
 
                     // Incrementamos en 1 segundo
-                    int timeElapsed = playerTimers.get(playerUUID) + 1;
-                    playerTimers.put(playerUUID, timeElapsed);
+                    int timeElapsed = playerTimers.get(playerName) + 1;
+                    playerTimers.put(playerName, timeElapsed);
 
 
                     // Mostramos el tiempo transcurrido en el Action Bar
@@ -89,7 +88,7 @@ public class TimerCommand implements CommandExecutor {
 
             // Iniciamos la tarea con 1 seg de delay y se repite cada 1 seg
             timerTask.runTaskTimer(plugin, 20, 20);
-            timerTasks.put(playerUUID, timerTask);
+            timerTasks.put(playerName, timerTask);
 
             // ---------------------------------------------------------------------
             //                             /DETENER
@@ -97,26 +96,27 @@ public class TimerCommand implements CommandExecutor {
         } else if (cmdName.equalsIgnoreCase("detener")) {
 
             // Verificamos si hay una tarea en ejecución para el jugador
-            if (!timerTasks.containsKey(playerUUID)) {
-                player.sendMessage(ChatColor.RED + "El contador no está en marcha.");
+            if (!timerTasks.containsKey(playerName)) {
+                player.sendMessage(ChatColor.RED + "¡Tu Puedes!");
                 return true;
             }
 
-            // Cancelamos la tarea
-            timerTasks.get(playerUUID).cancel();
-            timerTasks.remove(playerUUID);
+// Cancelamos la tarea
+            timerTasks.get(playerName).cancel();
+            timerTasks.remove(playerName);
+
 
             // Verificamos si existe un tiempo almacenado
-            if (!playerTimers.containsKey(playerUUID)) {
+            if (!playerTimers.containsKey(playerName)) {
                 player.sendMessage(ChatColor.RED + "No hay tiempo registrado para detener.");
                 return true;
             }
 
             // Obtenemos y removemos el tiempo
-            int totalTime = playerTimers.get(playerUUID);
-            plugin.getBestTimeManager().updateBestTimeWithName(playerUUID, player.getName(), totalTime);
+            int totalTime = playerTimers.get(playerName);
+            plugin.getBestTimeManager().updateBestTimeByName(playerName, totalTime);
             String finalTime = formatTime(totalTime);
-            playerTimers.remove(playerUUID);
+            playerTimers.remove(playerName);
 
             // Mensaje y sonido de fin
             player.sendTitle(ChatColor.RED + "Tiempo detenido",
